@@ -16,13 +16,16 @@ interface SocketContextType {
     onlineUsers: User[];
     selectedUser: User | null;
     messages: Message[];
-
+    typingUser: User | null;
+    sendTyping: (receiverId: string) => void;
+    stopTyping: (receiverId: string) => void;
     connectUser: (username: string) => void;
     selectUser: (user: User) => void;
     sendMessage: (message: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
+
 
 export function SocketProvider({
     children,
@@ -33,6 +36,24 @@ export function SocketProvider({
     const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [typingUser, setTypingUser] = useState<User | null>(null);
+
+
+    const sendTyping = (receiverId: string) => {
+        if (!currentUser || !receiverId) return;
+        socket.emit("typing", {
+            to: receiverId,
+            from: currentUser.id,
+        });
+    };
+
+    const stopTyping = (receiverId: string) => {
+        if (!currentUser || !receiverId) return;
+        socket.emit("stopTyping", {
+            to: receiverId,
+            from: currentUser.id,
+        });
+    };
 
     const connectUser = (username: string) => {
         const user: User = {
@@ -76,9 +97,19 @@ export function SocketProvider({
             setMessages((prev) => [...prev, message]);
         });
 
+        socket.on("userTyping", (data: { from: string }) => {
+            setTypingUser({ id: data.from, username: "" });
+        });
+
+        socket.on("userStoppedTyping", (data: { from: string }) => {
+            setTypingUser((prev) => (prev?.id === data.from ? null : prev));
+        });
+
         return () => {
             socket.off("online-users");
             socket.off("receive-message");
+            socket.off("userTyping");
+            socket.off("userStoppedTyping");
         };
     }, []);
 
@@ -92,6 +123,9 @@ export function SocketProvider({
                 selectUser,
                 messages,
                 sendMessage,
+                typingUser,
+                sendTyping,
+                stopTyping,
             }}
         >
             {children}

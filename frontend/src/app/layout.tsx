@@ -30,8 +30,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <SocketProvider>
-        <body className="min-h-full flex flex-col">
-          <main className="flex-1">
+        <body className="h-full flex flex-col bg-gray-50">
+          <main className="flex-1 overflow-y-auto">
             {children}
           </main>
         </body>

@@ -1,7 +1,11 @@
 import { Server, Socket } from "socket.io";
 import { users, userSockets } from "../store/memory.store.js";
 
+const typingUsers = new Map(); // userId -> { receiverId, timestamp }
+
 export const initializeSocket = (io: Server) => {
+    // Track typing users
+
     io.on("connection", (socket: Socket) => {
         console.log(`🟢 User Connected: ${socket.id}`);
 
@@ -11,6 +15,19 @@ export const initializeSocket = (io: Server) => {
             io.to(roomId).emit("room-message", {
                 text: "A new user joined the room.",
             });
+        });
+
+
+        socket.on("typing", (data: { to: string; from: string }) => {
+            const receiverSocketId = userSockets.get(data.to);
+            if (!receiverSocketId) return;
+            io.to(receiverSocketId).emit("userTyping", data);
+        });
+
+        socket.on("stopTyping", (data: { to: string; from: string }) => {
+            const receiverSocketId = userSockets.get(data.to);
+            if (!receiverSocketId) return;
+            io.to(receiverSocketId).emit("userStoppedTyping", data);
         });
 
         socket.on(
@@ -79,5 +96,6 @@ export const initializeSocket = (io: Server) => {
 
             io.emit("online-users", onlineUsers);
         });
+
     });
 };
