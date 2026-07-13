@@ -2,7 +2,6 @@
 
 import { useSocketContext } from "@/context/SocketContext";
 import { useState, useRef, KeyboardEvent, useEffect } from "react";
-import { useDebounce } from "use-debounce";
 
 interface Props {
     onSend: (message: string) => void;
@@ -10,16 +9,36 @@ interface Props {
 
 export default function ChatInput({ onSend }: Props) {
     const [message, setMessage] = useState("");
-    const [debouncedMessage] = useDebounce(message, 500);
     const inputRef = useRef<HTMLInputElement>(null);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { selectedUser, sendTyping, stopTyping } = useSocketContext();
+
+    // ✅ Fire typing on every keystroke
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setMessage(e.target.value);
+        sendTyping(selectedUser?.id || "");
+
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+        typingTimeoutRef.current = setTimeout(() => {
+            stopTyping(selectedUser?.id || "");
+        }, 600);
+    };
 
     const handleSend = () => {
         if (!message.trim()) return;
         onSend(message.trim());
         setMessage("");
         inputRef.current?.focus();
-        stopTyping(selectedUser?.id || "");
+
+        // ✅ Stop typing immediately when sending
+        if (selectedUser?.id) {
+            stopTyping(selectedUser.id);
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        }
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -29,13 +48,14 @@ export default function ChatInput({ onSend }: Props) {
         }
     };
 
+    // ✅ Cleanup timeout on unmount
     useEffect(() => {
-        if (debouncedMessage.trim()) {
-            sendTyping(selectedUser?.id || "");
-        } else {
-            stopTyping(selectedUser?.id || "");
-        }
-    }, [debouncedMessage, selectedUser?.id, sendTyping, stopTyping]);
+        return () => {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div className="flex gap-3 items-end">
@@ -49,7 +69,7 @@ export default function ChatInput({ onSend }: Props) {
                      focus:outline-none focus:ring-2 focus:ring-indigo-500 
                      focus:border-transparent transition-all duration-200
                      bg-gray-50 hover:bg-white placeholder-gray-400"
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleChange}
                     onKeyDown={handleKeyDown}
                 />
                 {message && (

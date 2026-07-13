@@ -6,6 +6,7 @@ import {
     useState,
     ReactNode,
     useEffect,
+    useCallback,
 } from "react";
 import { User } from "@/types/user";
 import { socket } from "@/lib/socket";
@@ -39,21 +40,21 @@ export function SocketProvider({
     const [typingUser, setTypingUser] = useState<User | null>(null);
 
 
-    const sendTyping = (receiverId: string) => {
+    const sendTyping = useCallback((receiverId: string) => {
         if (!currentUser || !receiverId) return;
         socket.emit("typing", {
             to: receiverId,
             from: currentUser.id,
         });
-    };
+    }, [currentUser]);
 
-    const stopTyping = (receiverId: string) => {
+    const stopTyping = useCallback((receiverId: string) => {
         if (!currentUser || !receiverId) return;
         socket.emit("stopTyping", {
             to: receiverId,
             from: currentUser.id,
         });
-    };
+    }, [currentUser]);
 
     const connectUser = (username: string) => {
         const user: User = {

@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { Message } from "@/types/message";
 import { useSocketContext } from "@/context/SocketContext";
-import TypingIndicator from "./TypingIndicator";
 
 interface Props {
     messages: Message[];
@@ -28,9 +27,6 @@ export default function MessageList({ messages, currentUserId }: Props) {
             minute: "2-digit",
         });
     };
-
-    const isSelectedUserTyping =
-        !!selectedUser && !!typingUser && typingUser.id === selectedUser.id;
 
     return (
         <div className="h-full flex flex-col bg-gray-50">
@@ -80,7 +76,7 @@ export default function MessageList({ messages, currentUserId }: Props) {
                                             {/* Sender name for group chats */}
                                             {showAvatar && !isMine && (
                                                 <p className="text-xs font-medium text-indigo-600 mb-1">
-                                                    {msg.senderId || "User"}
+                                                    {selectedUser?.username}
                                                 </p>
                                             )}
 
@@ -102,9 +98,6 @@ export default function MessageList({ messages, currentUserId }: Props) {
                             </div>
                         );
                     })
-                )}
-                {isSelectedUserTyping && (
-                    <TypingIndicator username={selectedUser?.username || ""} />
                 )}
                 <div ref={messagesEndRef} />
             </div>

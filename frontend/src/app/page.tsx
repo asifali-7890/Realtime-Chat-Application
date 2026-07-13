@@ -5,6 +5,7 @@ import { useSocketContext } from "@/context/SocketContext";
 import OnlineUsers from "@/components/OnlineUsers";
 import ChatInput from "@/components/ChatInput";
 import MessageList from "@/components/MessageList";
+import TypingIndicator from "@/components/TypingIndicator";
 
 export default function Home() {
   const {
@@ -15,6 +16,7 @@ export default function Home() {
     selectUser,
     messages,
     sendMessage,
+    typingUser,
   } = useSocketContext();
 
   return (
@@ -69,6 +71,11 @@ export default function Home() {
                       currentUserId={currentUser.id}
                     />
                   </div>
+
+                  {/* Add after MessageList */}
+                  {typingUser && typingUser.id === selectedUser?.id && (
+                    <TypingIndicator username={selectedUser.username} />
+                  )}
 
                   {/* Chat Input */}
                   <div className="border-t border-gray-200 p-4 bg-white">
