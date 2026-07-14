@@ -742,3 +742,21 @@ http://localhost:3001
 # License
 
 This project is intended for educational purposes and can be extended into a production-ready real-time chat application by integrating authentication, persistent storage, and additional messaging features.
+
+
+
+Commit 008fd48
+asifaliquraishi
+asifaliquraishi
+committed
+14 hours ago
+Add typing indicator functionality and improve typing feedback in chat component
+main
+1 parent 
+6c0bf33
+ commit 
+008fd48
+
+
+This is the commit id of the point where it is fully local memory usage not mongodb connected.
+Commit 008fd48
