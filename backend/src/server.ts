@@ -3,15 +3,17 @@ import { initializeSocket } from "./socket/index.js";
 
 import app from "./app.js";
 import { Server } from "socket.io";
-
+import userRoutes from "./routes/user.routes.js";
 const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "*",
         methods: ["GET", "POST"],
     },
 });
+
+app.use("/api/users", userRoutes);
 
 initializeSocket(io);
 

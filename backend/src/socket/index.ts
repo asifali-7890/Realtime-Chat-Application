@@ -4,7 +4,6 @@ import { users, userSockets } from "../store/memory.store.js";
 const typingUsers = new Map(); // userId -> { receiverId, timestamp }
 
 export const initializeSocket = (io: Server) => {
-    // Track typing users
 
     io.on("connection", (socket: Socket) => {
         console.log(`🟢 User Connected: ${socket.id}`);
@@ -65,15 +64,19 @@ export const initializeSocket = (io: Server) => {
         );
 
         socket.on("join-chat", (user) => {
+            console.log("🟢 response from join-chat", user);
             users.set(socket.id, {
                 ...user,
                 socketId: socket.id,
             });
 
-            userSockets.set(user.id, socket.id);
+            userSockets.set(user._id.toString(), socket.id);
+
+            console.log("🟢 users after join-chat", users);
+            console.log("🟢 userSockets after join-chat", userSockets);
 
             const onlineUsers = Array.from(users.values()).map((user) => ({
-                id: user.id,
+                _id: user._id,
                 username: user.username,
             }));
 
@@ -84,13 +87,13 @@ export const initializeSocket = (io: Server) => {
             const user = users.get(socket.id);
 
             if (user) {
-                userSockets.delete(user.id);
+                userSockets.delete(user._id.toString());
             }
 
             users.delete(socket.id);
 
             const onlineUsers = Array.from(users.values()).map((user) => ({
-                id: user.id,
+                _id: user._id,
                 username: user.username,
             }));
 

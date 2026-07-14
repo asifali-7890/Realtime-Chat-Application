@@ -16,13 +16,13 @@ export default function ChatInput({ onSend }: Props) {
     // ✅ Fire typing on every keystroke
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessage(e.target.value);
-        sendTyping(selectedUser?.id || "");
+        sendTyping(selectedUser?._id || "");
 
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
         typingTimeoutRef.current = setTimeout(() => {
-            stopTyping(selectedUser?.id || "");
+            stopTyping(selectedUser?._id || "");
         }, 600);
     };
 
@@ -33,8 +33,8 @@ export default function ChatInput({ onSend }: Props) {
         inputRef.current?.focus();
 
         // ✅ Stop typing immediately when sending
-        if (selectedUser?.id) {
-            stopTyping(selectedUser.id);
+        if (selectedUser?._id) {
+            stopTyping(selectedUser._id);
             if (typingTimeoutRef.current) {
                 clearTimeout(typingTimeoutRef.current);
             }

@@ -38,11 +38,11 @@ export default function OnlineUsers({ users, selectedUser, onSelect }: Props) {
                 ) : (
                     <div className="py-2">
                         {users.map((user) => {
-                            const isSelected = selectedUser?.id === user.id;
+                            const isSelected = selectedUser?._id === user._id;
 
                             return (
                                 <button
-                                    key={user.id}
+                                    key={user._id}
                                     onClick={() => onSelect(user)}
                                     className={`w-full px-4 py-3 flex items-center gap-3 transition-all duration-200 
                     hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500

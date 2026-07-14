@@ -39,7 +39,7 @@ export default function Home() {
             <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
               <OnlineUsers
                 users={onlineUsers.filter(
-                  (user) => user.id !== currentUser.id
+                  (user) => user._id !== currentUser._id
                 )}
                 selectedUser={selectedUser}
                 onSelect={selectUser}
@@ -63,17 +63,17 @@ export default function Home() {
                     <MessageList
                       messages={messages.filter(
                         (msg) =>
-                          (msg.senderId === currentUser.id &&
-                            msg.receiverId === selectedUser.id) ||
-                          (msg.senderId === selectedUser.id &&
-                            msg.receiverId === currentUser.id)
+                          (msg.senderId === currentUser._id &&
+                            msg.receiverId === selectedUser._id) ||
+                          (msg.senderId === selectedUser._id &&
+                            msg.receiverId === currentUser._id)
                       )}
-                      currentUserId={currentUser.id}
+                      currentUserId={currentUser._id}
                     />
                   </div>
 
                   {/* Add after MessageList */}
-                  {typingUser && typingUser.id === selectedUser?.id && (
+                  {typingUser && typingUser._id === selectedUser?._id && (
                     <TypingIndicator username={selectedUser.username} />
                   )}
 

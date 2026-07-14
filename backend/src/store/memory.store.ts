@@ -1,7 +1,8 @@
 export type User = {
-    id: string;
+    _id: string;
     username: string;
-    socketId: string;
+    socketId?: string;
+    isOnline: boolean;
 };
 
 export const users = new Map<string, User>();

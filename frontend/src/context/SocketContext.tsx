@@ -11,6 +11,7 @@ import {
 import { User } from "@/types/user";
 import { socket } from "@/lib/socket";
 import { Message } from "@/types/message";
+import { createUser } from "@/lib/api";
 
 interface SocketContextType {
     currentUser: User | null;
@@ -44,7 +45,7 @@ export function SocketProvider({
         if (!currentUser || !receiverId) return;
         socket.emit("typing", {
             to: receiverId,
-            from: currentUser.id,
+            from: currentUser._id,
         });
     }, [currentUser]);
 
@@ -52,19 +53,22 @@ export function SocketProvider({
         if (!currentUser || !receiverId) return;
         socket.emit("stopTyping", {
             to: receiverId,
-            from: currentUser.id,
+            from: currentUser._id,
         });
     }, [currentUser]);
 
-    const connectUser = (username: string) => {
-        const user: User = {
-            id: crypto.randomUUID(),
-            username,
-        };
+    const connectUser = async (username: string) => {
+        console.log("🟢 username", username);
+        const user = await createUser(username);
 
+        console.log("🟢 user after createUser", user);
         setCurrentUser(user);
         socket.connect();
-        socket.emit("join-chat", user);
+        socket.once("connect", () => {
+            console.log("✅ Connected:", socket.id);
+
+            socket.emit("join-chat", user);
+        });
     };
 
     const selectUser = (user: User) => {
@@ -78,8 +82,8 @@ export function SocketProvider({
         if (!currentUser || !selectedUser) return;
 
         const payload: Message = {
-            senderId: currentUser.id,
-            receiverId: selectedUser.id,
+            senderId: currentUser._id,
+            receiverId: selectedUser._id,
             message,
         };
 
@@ -99,11 +103,11 @@ export function SocketProvider({
         });
 
         socket.on("userTyping", (data: { from: string }) => {
-            setTypingUser({ id: data.from, username: "" });
+            setTypingUser({ _id: data.from, username: "", isOnline: true });
         });
 
         socket.on("userStoppedTyping", (data: { from: string }) => {
-            setTypingUser((prev) => (prev?.id === data.from ? null : prev));
+            setTypingUser((prev) => (prev?._id === data.from ? null : prev));
         });
 
         return () => {
