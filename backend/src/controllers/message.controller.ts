@@ -41,14 +41,24 @@ export const getConversations = async (
 ) => {
     try {
         const { userId } = req.params;
-
+        console.log(userId);
         const conversations = await getUserConversations(userId as string);
+        console.log(conversations);
 
-        const otherUser = conversations.map((conversation) => conversation.participants.find(
-            (user) => user._id.toString() !== userId
-        ));
+        const result = conversations.map((conversation) => {
+            const otherUser = conversation.participants.find(
+                (user) => user._id.toString() !== userId
+            );
 
-        res.json(otherUser);
+            return {
+                conversationId: conversation._id,
+                user: otherUser,
+                lastMessage: conversation.lastMessage,
+                updatedAt: conversation.updatedAt,
+            };
+        });
+
+        res.json(result);
     } catch {
         res.status(500).json({
             message: "Something went wrong",

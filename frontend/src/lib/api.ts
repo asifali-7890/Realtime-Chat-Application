@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export const createUser = async (username: string) => {
     const response = await fetch("http://localhost:5000/api/users", {
         method: "POST",
@@ -15,3 +17,11 @@ export const createUser = async (username: string) => {
 
     return response.json();
 };
+
+
+export const api = axios.create({
+    baseURL: "http://localhost:5000/api",
+    headers: {
+        "Content-Type": "application/json",
+    },
+});

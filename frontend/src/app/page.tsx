@@ -2,10 +2,11 @@
 
 import UsernameForm from "@/components/UsernameForm";
 import { useSocketContext } from "@/context/SocketContext";
-import OnlineUsers from "@/components/OnlineUsers";
+import OnlineUsers from "@/components/ConversationList";
 import ChatInput from "@/components/ChatInput";
 import MessageList from "@/components/MessageList";
 import TypingIndicator from "@/components/TypingIndicator";
+import ConversationList from "@/components/ConversationList";
 
 export default function Home() {
   const {
@@ -17,6 +18,7 @@ export default function Home() {
     messages,
     sendMessage,
     typingUser,
+    conversations,
   } = useSocketContext();
 
   return (
@@ -37,10 +39,11 @@ export default function Home() {
           <div className="flex flex-1 overflow-hidden">
             {/* Sidebar - Online Users */}
             <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
-              <OnlineUsers
-                users={onlineUsers.filter(
+              <ConversationList
+                onlineUsers={onlineUsers.filter(
                   (user) => user._id !== currentUser._id
                 )}
+                conversations={conversations}
                 selectedUser={selectedUser}
                 onSelect={selectUser}
               />
@@ -61,13 +64,7 @@ export default function Home() {
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto">
                     <MessageList
-                      messages={messages.filter(
-                        (msg) =>
-                          (msg.senderId === currentUser._id &&
-                            msg.receiverId === selectedUser._id) ||
-                          (msg.senderId === selectedUser._id &&
-                            msg.receiverId === currentUser._id)
-                      )}
+                      messages={messages}
                       currentUserId={currentUser._id}
                     />
                   </div>

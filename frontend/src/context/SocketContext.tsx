@@ -12,18 +12,29 @@ import { User } from "@/types/user";
 import { socket } from "@/lib/socket";
 import { Message } from "@/types/message";
 import { createUser } from "@/lib/api";
+import { getMessages } from "@/lib/message.api";
+import { getConversations } from "@/lib/conversation.api";
 
 interface SocketContextType {
     currentUser: User | null;
     onlineUsers: User[];
     selectedUser: User | null;
     messages: Message[];
+    conversations: Conversation[];
+    setConversations: (conversations: Conversation[]) => void;
     typingUser: User | null;
     sendTyping: (receiverId: string) => void;
     stopTyping: (receiverId: string) => void;
     connectUser: (username: string) => void;
     selectUser: (user: User) => void;
     sendMessage: (message: string) => void;
+}
+
+export interface Conversation {
+    conversationId: string;
+    user: User;
+    lastMessage: string;
+    updatedAt: string;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -34,8 +45,10 @@ export function SocketProvider({
 }: {
     children: ReactNode;
 }) {
+
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
+    const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [typingUser, setTypingUser] = useState<User | null>(null);
@@ -59,14 +72,32 @@ export function SocketProvider({
 
     const connectUser = async (username: string) => {
         const user = await createUser(username);
+
         setCurrentUser(user);
 
         if (!socket.connected) {
             socket.connect();
+
+            await new Promise<void>((resolve) => {
+                socket.once("connect", () => resolve());
+            });
         }
+
+        socket.emit("join-chat", user);
+
+        const conversations = await getConversations(user._id);
+
+        setConversations(conversations);
     };
 
-    const selectUser = (user: User) => {
+    const selectUser = async (user: User) => {
+        const history = await getMessages(
+            currentUser?._id as string,
+            user._id
+        );
+
+        setMessages(history);
+
         setSelectedUser(user);
     };
 
@@ -136,6 +167,8 @@ export function SocketProvider({
                 selectedUser,
                 selectUser,
                 messages,
+                conversations,
+                setConversations,
                 sendMessage,
                 typingUser,
                 sendTyping,
