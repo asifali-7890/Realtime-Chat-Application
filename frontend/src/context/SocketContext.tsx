@@ -58,17 +58,12 @@ export function SocketProvider({
     }, [currentUser]);
 
     const connectUser = async (username: string) => {
-        console.log("🟢 username", username);
         const user = await createUser(username);
-
-        console.log("🟢 user after createUser", user);
         setCurrentUser(user);
-        socket.connect();
-        socket.once("connect", () => {
-            console.log("✅ Connected:", socket.id);
 
-            socket.emit("join-chat", user);
-        });
+        if (!socket.connected) {
+            socket.connect();
+        }
     };
 
     const selectUser = (user: User) => {
@@ -81,17 +76,30 @@ export function SocketProvider({
 
         if (!currentUser || !selectedUser) return;
 
-        const payload: Message = {
+        socket.emit("private-message", {
             senderId: currentUser._id,
             receiverId: selectedUser._id,
             message,
+        });
+    };
+
+    useEffect(() => {
+        if (!currentUser) return;
+
+        const registerUser = () => {
+            socket.emit("join-chat", currentUser);
         };
 
-        // Show immediately for the sender (don't wait only on server echo)
-        setMessages((prev) => [...prev, payload]);
+        socket.on("connect", registerUser);
 
-        socket.emit("private-message", payload);
-    };
+        if (socket.connected) {
+            registerUser();
+        }
+
+        return () => {
+            socket.off("connect", registerUser);
+        };
+    }, [currentUser]);
 
     useEffect(() => {
         socket.on("online-users", (users: User[]) => {
@@ -99,6 +107,7 @@ export function SocketProvider({
         });
 
         socket.on("receive-message", (message: Message) => {
+            console.log("🟢 receive-message ran", message);
             setMessages((prev) => [...prev, message]);
         });
 

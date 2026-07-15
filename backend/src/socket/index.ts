@@ -1,5 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { users, userSockets } from "../store/memory.store.js";
+import { findOrCreateConversation } from "../services/conversation.service.js";
+import { saveMessage } from "../services/message.service.js";
 
 const typingUsers = new Map(); // userId -> { receiverId, timestamp }
 
@@ -29,30 +31,50 @@ export const initializeSocket = (io: Server) => {
             io.to(receiverSocketId).emit("userStoppedTyping", data);
         });
 
-        socket.on(
-            "private-message",
-            (data: {
-                senderId: string;
-                receiverId: string;
-                message: string;
-            }) => {
-                const receiverSocketId = userSockets.get(data.receiverId);
+        socket.on("private-message", async (data) => {
+            try {
+                const {
+                    senderId,
+                    receiverId,
+                    message,
+                } = data;
 
-                if (!receiverSocketId) {
-                    console.log("Receiver is offline");
-                    return;
+                // Find or create conversation
+                const conversation = await findOrCreateConversation(
+                    senderId,
+                    receiverId
+                );
+
+                // Save message
+                const savedMessage = await saveMessage(
+                    conversation._id.toString(),
+                    senderId,
+                    message
+                );
+
+                const messagePayload = {
+                    _id: savedMessage._id.toString(),
+                    senderId: savedMessage.senderId.toString(),
+                    receiverId,
+                    message: savedMessage.message,
+                    createdAt: savedMessage.createdAt,
+                };
+
+                const receiverSocketId = userSockets.get(receiverId);
+
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit(
+                        "receive-message",
+                        messagePayload
+                    );
                 }
 
-                // Only deliver to receiver — sender already shows the message locally
-                io.to(receiverSocketId).emit("receive-message", {
-                    senderId: data.senderId,
-                    receiverId: data.receiverId,
-                    message: data.message,
-                });
-
-                console.log("Private message sent");
+                // Sender acknowledgement
+                socket.emit("receive-message", messagePayload);
+            } catch (error) {
+                console.error(error);
             }
-        );
+        });
 
         socket.on(
             "send-message",
@@ -64,7 +86,7 @@ export const initializeSocket = (io: Server) => {
         );
 
         socket.on("join-chat", (user) => {
-            console.log("🟢 response from join-chat", user);
+            // console.log("🟢 response from join-chat", user);
             users.set(socket.id, {
                 ...user,
                 socketId: socket.id,
@@ -72,8 +94,8 @@ export const initializeSocket = (io: Server) => {
 
             userSockets.set(user._id.toString(), socket.id);
 
-            console.log("🟢 users after join-chat", users);
-            console.log("🟢 userSockets after join-chat", userSockets);
+            // console.log("🟢 users after join-chat", users);
+            // console.log("🟢 userSockets after join-chat", userSockets);
 
             const onlineUsers = Array.from(users.values()).map((user) => ({
                 _id: user._id,

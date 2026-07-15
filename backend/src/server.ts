@@ -13,8 +13,6 @@ const io = new Server(server, {
     },
 });
 
-app.use("/api/users", userRoutes);
-
 initializeSocket(io);
 
 const PORT = process.env.PORT || 5000;
