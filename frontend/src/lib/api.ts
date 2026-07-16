@@ -12,7 +12,8 @@ export const createUser = async (username: string) => {
     });
 
     if (!response.ok) {
-        throw new Error("Failed to create user");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create user");
     }
 
     return response.json();

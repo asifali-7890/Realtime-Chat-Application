@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, KeyboardEvent } from "react";
+import { useSocketContext } from "@/context/SocketContext";
 
 type Props = {
     onConnect: (username: string) => void;
 };
 
+
 export default function UsernameForm({ onConnect }: Props) {
+    const { currentUser } = useSocketContext();
     const [username, setUsername] = useState("");
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +44,11 @@ export default function UsernameForm({ onConnect }: Props) {
         try {
             await onConnect(trimmedUsername);
         } catch (err) {
-            setError("Failed to connect. Please try again.");
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("Failed to connect. Please try again.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -52,6 +59,7 @@ export default function UsernameForm({ onConnect }: Props) {
             handleSubmit();
         }
     };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">

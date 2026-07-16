@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { users, userSockets } from "../store/memory.store.js";
 import { findOrCreateConversation } from "../services/conversation.service.js";
 import { saveMessage } from "../services/message.service.js";
+import { User } from "../models/user.model.js";
 
 const typingUsers = new Map(); // userId -> { receiverId, timestamp }
 
@@ -85,8 +86,13 @@ export const initializeSocket = (io: Server) => {
             }
         );
 
-        socket.on("join-chat", (user) => {
-            // console.log("🟢 response from join-chat", user);
+        socket.on("join-chat", async (user) => {
+            console.log("🟢 response from join-chat", user);
+
+            await User.findByIdAndUpdate(user._id, {
+                isOnline: true,
+            });
+
             users.set(socket.id, {
                 ...user,
                 socketId: socket.id,
@@ -105,14 +111,16 @@ export const initializeSocket = (io: Server) => {
             io.emit("online-users", onlineUsers);
         });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", async () => {
             const user = users.get(socket.id);
 
             if (user) {
+                await User.findByIdAndUpdate(user._id, {
+                    isOnline: false,
+                });
                 userSockets.delete(user._id.toString());
+                users.delete(socket.id);
             }
-
-            users.delete(socket.id);
 
             const onlineUsers = Array.from(users.values()).map((user) => ({
                 _id: user._id,

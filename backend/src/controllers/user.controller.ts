@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { createOrGetUser } from "../services/user.service.js";
+import { createOrGetUser, getAllUsers } from "../services/user.service.js";
 
 export const createUser = async (
     req: Request,
@@ -18,10 +18,34 @@ export const createUser = async (
 
         return res.status(200).json(user);
     } catch (error) {
-        console.error(error);
+        if (error instanceof Error && error.message === "USER_ALREADY_ONLINE") {
+            return res.status(409).json({
+                message: "Username is already logged in.",
+            });
+        }
 
-        return res.status(500).json({
-            message: "Internal Server Error",
+        res.status(500).json({
+            message: "Something went wrong.",
+        });
+    }
+};
+
+
+
+
+export const getUsers = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const { currentUserId } = req.params;
+
+        const users = await getAllUsers(currentUserId as string);
+
+        res.json(users);
+    } catch {
+        res.status(500).json({
+            message: "Something went wrong",
         });
     }
 };

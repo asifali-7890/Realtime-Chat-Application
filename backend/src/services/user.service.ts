@@ -1,15 +1,28 @@
 import { User } from "../models/user.model.js";
 
 export const createOrGetUser = async (username: string) => {
-    let user = await User.findOne({ username });
+    const existingUser = await User.findOne({ username });
 
-    if (user) {
-        return user;
+    if (existingUser) {
+        if (existingUser.isOnline) {
+            throw new Error("USER_ALREADY_ONLINE");
+        }
+
+        return existingUser;
     }
 
-    user = await User.create({
+    return await User.create({
         username,
+        isOnline: false,
     });
+};
 
-    return user;
+
+
+// getAllUsers.service.ts
+
+export const getAllUsers = async (currentUserId: string) => {
+    return User.find({
+        _id: { $ne: currentUserId },
+    }).select("_id username isOnline");
 };
